@@ -81,6 +81,7 @@ and the formula explained in the polynomial hash section to generate any hash we
     2 010   | | 1*P^1 + 2*P^0
     1 001 | | | 1*P^0
     
+    # TODO: fix this section
     - for each iteration in summing:
         -> generic fenwick prefix sums are achieved by adding all fenwick values of the desired index's active bits
         -> multiplier variable set to 0 at first
@@ -90,6 +91,7 @@ and the formula explained in the polynomial hash section to generate any hash we
     example using 3:
     target hash: 1 * P^2 + 2*P^1 + 3*P^0
     
+    # TODO: fix this section
     summing using fenwick:
     -> add fenwick[3] * P^multiplier(0 currently) -> 1(3*P^0) = 3*P^0
     -> add LSB(3) to multiplier (1 after update)
@@ -105,22 +107,27 @@ def LSB(x):
 
 # Function to construct fenwick tree to maintain polynomial hash
 def construct(arr):
-    fenwick = arr.copy()
+    # fenwick = arr.copy()
+    fenwick = [0] * (N + 1)
     for i in range(1, len(fenwick)):
-        j = i + LSB(i)
-        if j < len(fenwick):
-            fenwick[j] += (fenwick[i] * pow(P, LSB(i), M)) % M
-            fenwick[j] %= M
+        update(fenwick, i, arr[i])
+        # below is ~O(N) method of constructing fenwick tree
+        # j = i + LSB(i)
+        # if j < len(fenwick):
+        #     fenwick[j] += (fenwick[i] * pow(P, LSB(i), M)) % M
+        #     fenwick[j] %= M
+        # print(i, fenwick)
     return fenwick
 
 # Function to get prefix sums from fenwick tree
 def prefix_sum(fenwick, pos):
     tot = 0
-    iteration = 0
+    # iteration = 0
+    init_pos = pos
     while pos > 0:
-        tot += (fenwick[pos] * pow(P, iteration, M)) % M # might need mod after
+        tot += (fenwick[pos] * pow(P, init_pos-pos, M)) % M # might need mod after
         tot %= M
-        iteration += LSB(pos)
+        # iteration += LSB(pos)
         pos -= LSB(pos)
     return tot
 
@@ -131,16 +138,17 @@ def query(fenwick, l ,r):
 
 # Function to update values in the fenwick tree
 def update(fenwick, pos, diff):
-    iteration = 0
+    init_pos = pos
     while pos < len(fenwick):
-        fenwick[pos] += (diff * pow(P, iteration, M)) % M
+        fenwick[pos] += (diff * pow(P, pos-init_pos, M)) % M
         fenwick[pos] %= M
-        iteration += LSB(pos)
+        # iteration += LSB(pos)
         pos += LSB(pos)
     return
 
 # SOLVE
-P = 209389283097
+# TODO: Research about bases and how they affect collisions, from testing bases > 10**5 seem to work
+P = 209389283097 
 M = 10**9 + 7
 N, Q = map(int, input().split())
 arr = [0] + list(map(int, input().split()))
@@ -155,7 +163,6 @@ for _ in range(Q):
         i, v = q[1:]
         update(fenwick, i, v - arr[i])
         arr[i] = v
-
 
 """
 5 4
@@ -172,6 +179,13 @@ for _ in range(Q):
 5 2
 1 2 3 2 5
 1 2 2 4 4
+
+6 4
+1 2 3 4 5 6
+1 1 5 1 5
+1 1 3 3 5
+2 3 4
+1 1 3 3 5
 
 True False
 1 6 8 1 7 3 2 1 5 5
