@@ -1,3 +1,7 @@
+# Fast IO
+from sys import stdin
+input = stdin.readline
+
 """
 Main concepts used: polynomial hash, Fenwick tree (although this could also be implemented with a segment tree)
 
@@ -96,57 +100,98 @@ and the formula explained in the polynomial hash section to generate any hash we
     -> total = 1 * P^2 + 2*P^1 + 3*P^0
 """
 
+# Fenwick implementation
+# Function to get least significant bit (LSB)
+def LSB(x):
+    return x & -x
 
-class BIT_and_polynomial_hashing:
-    def __init__(self, arr, N):
-        self.arr = arr
-        self.N = N
-        self.fenwick = self.construct(arr)
-        self.P = 209389283097
-        self.M = 10**9 + 7
+# Function to construct fenwick tree to maintain polynomial hash
+def construct(arr):
+    # fenwick = arr.copy()
+    fenwick = [0] * (N + 1)
+    for i in range(1, len(fenwick)):
+        update(fenwick, i, arr[i])
+        # below is ~O(N) method of constructing fenwick tree
+        # j = i + LSB(i)
+        # if j < len(fenwick):
+        #     fenwick[j] += (fenwick[i] * pow(P, LSB(i), M)) % M
+        #     fenwick[j] %= M
+        # print(i, fenwick)
+    return fenwick
 
-    # Fenwick implementation
-    # Function to get least significant bit (LSB)
-    def LSB(self, x):
-        return x & -x
+# Function to get prefix sums from fenwick tree
+def prefix_sum(fenwick, pos):
+    tot = 0
+    # iteration = 0
+    init_pos = pos
+    while pos > 0:
+        tot += (fenwick[pos] * pow(P, init_pos-pos, M)) % M # might need mod after
+        tot %= M
+        # iteration += LSB(pos)
+        pos -= LSB(pos)
+    return tot
 
-    # Function to construct fenwick tree to maintain polynomial hash
-    def construct(self, arr):
-        # fenwick = arr.copy()
-        fenwick = [0] * (self.N + 1)
-        for i in range(1, len(fenwick)):
-            self.update(fenwick, i, arr[i])
-            # below is ~O(N) method of constructing fenwick tree
-            # j = i + LSB(i)
-            # if j < len(fenwick):
-            #     fenwick[j] += (fenwick[i] * pow(P, LSB(i), M)) % M
-            #     fenwick[j] %= M
-            # print(i, fenwick)
-        return fenwick
+# Function to get range sums from fenwick tree using prefix sums
+def query(fenwick, l ,r):
+    global P, M
+    return (prefix_sum(fenwick, r) - prefix_sum(fenwick, l - 1) * pow(P, r-l+1, M)) % M
 
-    # Function to get prefix sums from fenwick tree
-    def prefix_sum(self, fenwick, pos):
-        tot = 0
-        # iteration = 0
-        init_pos = pos
-        while pos > 0:
-            tot += (fenwick[pos] * pow(P, init_pos - pos, M)) % M  # might need mod after
-            tot %= M
-            # iteration += LSB(pos)
-            pos -= self.LSB(pos)
-        return tot
+# Function to update values in the fenwick tree
+def update(fenwick, pos, diff):
+    init_pos = pos
+    while pos < len(fenwick):
+        fenwick[pos] += (diff * pow(P, pos-init_pos, M)) % M
+        fenwick[pos] %= M
+        # iteration += LSB(pos)
+        pos += LSB(pos)
+    return
 
-    # Function to get range sums from fenwick tree using prefix sums
-    def query(self, fenwick, l, r):
-        global P, M
-        return (self.prefix_sum(fenwick, r) - self.prefix_sum(fenwick, l - 1) * pow(P, r - l + 1, M)) % M
+# SOLVE
+# TODO: Research about bases and how they affect collisions, from testing bases > 10**5 seem to work
+P = 209389283097 
+M = 10**9 + 7
+N, Q = map(int, input().split())
+arr = [0] + list(map(int, input().split()))
+fenwick = construct(arr)
 
-    # Function to update values in the fenwick tree
-    def update(self, pos, diff):
-        init_pos = pos
-        while pos < len(self.fenwick):
-            self.fenwick[pos] += (diff * pow(P, pos - init_pos, M)) % M
-            self.fenwick[pos] %= M
-            # iteration += LSB(pos)
-            pos += self.LSB(pos)
-        return
+for _ in range(Q):
+    q = list(map(int, input().split()))
+    if q[0] == 1:
+        l1, r1, l2, r2 = q[1:]
+        print(int(query(fenwick, l1, r1) == query(fenwick, l2, r2)))
+    else:
+        i, v = q[1:]
+        update(fenwick, i, v - arr[i])
+        arr[i] = v
+
+"""
+5 4
+1 3 1 1 1
+1 1 5 1 5
+1 1 3 3 5
+2 3 4
+1 1 3 3 5
+
+10 1
+4 6 5 5 9 3 9 5 1 8
+1 3 3 8 8
+
+5 2
+1 2 3 2 5
+1 2 2 4 4
+
+6 4
+1 2 3 4 5 6
+1 1 5 1 5
+1 1 3 3 5
+2 3 4
+1 1 3 3 5
+
+True False
+1 6 8 1 7 3 2 1 5 5
+8 8 1 1
+7 2
+6 3
+2 6
+"""
+
