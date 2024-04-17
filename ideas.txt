@@ -1,1 +1,0 @@
-- hash stored should most likely follow the form x_0*p^N + x_1*p^N-1 + x_2*p^N-2... x_N*p*1

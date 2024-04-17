@@ -3,8 +3,8 @@ class Naive:
         self.arr = arr
         self.N = N
 
-    def query(self, arr, l, r):
-        return arr[l:r + 1]
+    def query(self, l, r):
+        return self.arr[l:r + 1]
 
     def update(self, pos, val):
         self.arr[pos] = val
