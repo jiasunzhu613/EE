@@ -96,14 +96,13 @@ and the formula explained in the polynomial hash section to generate any hash we
     -> total = 1 * P^2 + 2*P^1 + 3*P^0
 """
 
-
+P = 209389283097
+M = 10**9 + 7
 class BIT_and_polynomial_hashing:
     def __init__(self, arr, N):
         self.arr = arr
         self.N = N
         self.fenwick = self.construct(arr)
-        self.P = 209389283097
-        self.M = 10**9 + 7
 
     # Fenwick implementation
     # Function to get least significant bit (LSB)
@@ -112,34 +111,32 @@ class BIT_and_polynomial_hashing:
 
     # Function to construct fenwick tree to maintain polynomial hash
     def construct(self, arr):
-        # fenwick = arr.copy()
-        fenwick = [0] * (self.N + 1)
+        fenwick = arr.copy()
+        # fenwick = [0] * (self.N + 1)
         for i in range(1, len(fenwick)):
-            self.update(fenwick, i, arr[i])
+            # self.update(i, arr[i])
             # below is ~O(N) method of constructing fenwick tree
-            # j = i + LSB(i)
-            # if j < len(fenwick):
-            #     fenwick[j] += (fenwick[i] * pow(P, LSB(i), M)) % M
-            #     fenwick[j] %= M
-            # print(i, fenwick)
+            j = i + self.LSB(i)
+            if j < len(fenwick):
+                fenwick[j] += (fenwick[i] * pow(P, self.LSB(i), M)) % M
+                fenwick[j] %= M
         return fenwick
 
     # Function to get prefix sums from fenwick tree
-    def prefix_sum(self, fenwick, pos):
+    def prefix_sum(self, pos):
         tot = 0
         # iteration = 0
         init_pos = pos
         while pos > 0:
-            tot += (fenwick[pos] * pow(P, init_pos - pos, M)) % M  # might need mod after
+            tot += (self.fenwick[pos] * pow(P, init_pos - pos, M)) % M  # might need mod after
             tot %= M
             # iteration += LSB(pos)
             pos -= self.LSB(pos)
         return tot
 
     # Function to get range sums from fenwick tree using prefix sums
-    def query(self, fenwick, l, r):
-        global P, M
-        return (self.prefix_sum(fenwick, r) - self.prefix_sum(fenwick, l - 1) * pow(P, r - l + 1, M)) % M
+    def query(self, l, r):
+        return (self.prefix_sum(r) - self.prefix_sum(l - 1) * pow(P, r - l + 1, M)) % M
 
     # Function to update values in the fenwick tree
     def update(self, pos, diff):
